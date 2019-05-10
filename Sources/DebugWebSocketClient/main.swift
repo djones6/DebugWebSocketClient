@@ -4,6 +4,8 @@ import Starscream
 var FILE = "256k.bin"
 var CONCURRENCY = 1
 var TEST_DURATION = 5000
+var HOST = "localhost"
+var PORT = 8080
 
 // Debug
 var DEBUG = false
@@ -12,6 +14,8 @@ func usage() {
     print("Options are:")
     print("  -c, --concurrency n: number of concurrent Dispatch blocks (default: \(CONCURRENCY))")
     print("  -f, --file name: file to send (default: '\(FILE)')")
+    print("  -h, --host name: hostname of server (default: '\(HOST)')")
+    print("  -p, --port n: port of server (default: '\(PORT)')")
     print("  -t, --time n: maximum runtime of the test (in ms) (default: \(TEST_DURATION))")
     print("  -d, --debug: print a lot of debugging output (default: \(DEBUG))")
     exit(1)
@@ -33,6 +37,10 @@ for arg in remainingArgs {
     if let _param = param {
         param = nil
         switch _param {
+        case "-h", "--host":
+            HOST = arg
+        case "-p", "--port":
+            PORT = parseInt(param: _param, value: arg)
         case "-f", "--file":
             FILE = arg
         case "-c", "--concurrency":
@@ -45,11 +53,11 @@ for arg in remainingArgs {
         }
     } else {
         switch arg {
-        case "-c", "--concurrency", "-f", "--file", "-t", "--time":
+        case "-h", "--host", "-p", "--port", "-c", "--concurrency", "-f", "--file", "-t", "--time":
             param = arg
         case "-d", "--debug":
             DEBUG = true
-        case "-?", "-h", "--help", "--?":
+        case "-?", "--help", "--?":
             usage()
         default:
             print("Invalid option '\(arg)'")
@@ -74,7 +82,7 @@ var clients: [MyClient] = []
 
 // Start the clients
 for i in 1...CONCURRENCY {
-    let wsclient = WebSocket(url: URL(string: "ws://localhost:8080/ws")!)
+    let wsclient = WebSocket(url: URL(string: "ws://\(HOST):\(PORT)/ws")!)
     let client = MyClient(client: wsclient, id: i, payload: payload, completionLock: completionLock)
     clients.append(client)
     wsclient.connect()
@@ -98,6 +106,7 @@ DispatchQueue.global().asyncAfter(deadline: .now() + DispatchTimeInterval.millis
     // Sum total of complete ops
     var completedOps = 0
     for client in clients {
+        print("Client \(client.id) sent \(client.completeLoops) messages")
         completedOps += client.completeLoops
     }
 

@@ -4,7 +4,7 @@ import Starscream
 class MyClient {
 
     private let client: WebSocket
-    private let id: Int
+    let id: Int
     private let payload: Data
 
     var RUNNING = true
@@ -35,7 +35,8 @@ class MyClient {
             self.completeLoops += 1
             self.writeLoop()
         }
-        client.write(data: self.payload, completion: completion)
+        let message = "Client \(id) message \(completeLoops): padpadpadpadpadpadpadpad".data(using: .utf8)! + self.payload
+        client.write(data: message, completion: completion)
     }
 
     func stopRunning() {
